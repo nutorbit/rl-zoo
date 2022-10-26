@@ -46,6 +46,14 @@ docs = ["sphinx-notfound-page", "zope.interface", "sphinx", "furo"]
 dev = ["cloudpickle", "pre-commit", "sphinx-notfound-page", "sphinx", "furo", "zope.interface", "pytest-mypy-plugins", "mypy (>=0.900,!=0.940)", "pytest (>=4.3.0)", "pympler", "hypothesis", "coverage[toml] (>=5.0.2)"]
 
 [[package]]
+name = "box2d"
+version = "2.3.10"
+description = "Python Box2D"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "box2d-py"
 version = "2.3.5"
 description = "Python Box2D"
@@ -917,13 +925,14 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "flake8 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "027820a57ff2b42a1c054f4ea874ba7e6d820cedca8bbcb6a1663768b8e61768"
+content-hash = "63c017aa6ccff9b9536d28807407e3c01d55371032a71580952e073621abd85e"
 
 [metadata.files]
 absl-py = []
 ale-py = []
 atomicwrites = []
 attrs = []
+box2d = []
 box2d-py = []
 certifi = []
 cffi = []
