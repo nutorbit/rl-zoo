@@ -17,6 +17,7 @@ class OffPolicyRoller:
                  epsilon: float = 0.1,
                  replay_size: int = 10_000,
                  update_every: int = 5,
+                 eval_every: int = 500,
                  batch_size: int = 32,
                  ):
 
@@ -28,7 +29,33 @@ class OffPolicyRoller:
         self.epsilon = epsilon
         self.replay_size = replay_size
         self.update_every = update_every
+        self.eval_every = eval_every
         self.batch_size = batch_size
+
+    def eval(self, params):
+        rng = jax.random.PRNGKey(1)
+
+        obs, _ = self.env.reset()
+        done = False
+        ep_reward = 0
+        ep_timesteps = 0
+        while not done:
+
+            rng, rng_action = jax.random.split(rng)
+            action = self.policy.get_action(params, obs, rng_action)
+            if not isinstance(action.action, np.ndarray):
+                action = np.array(action.action)[0]
+
+            next_obs, reward, done, _, _ = self.env.step(action)
+            obs = next_obs
+            ep_reward += reward
+            ep_timesteps += 1
+
+            if ep_timesteps >= self.max_timesteps_per_episode:
+                break
+
+        print("Evaluation total reward:", ep_reward)
+        print("--------------")
 
     def run(self):
         rb = ReplayBuffer(self.replay_size)
@@ -47,12 +74,11 @@ class OffPolicyRoller:
         with tqdm(total=self.max_timesteps) as pbar:
             while timesteps < self.max_timesteps:
                 # select action
-                if timesteps <= self.warm_start or np.random.uniform() < self.epsilon:
+                rng, rng_action = jax.random.split(rng)
+                if timesteps <= self.warm_start or jax.random.uniform(rng_action) < self.epsilon:
                     action = self.env.action_space.sample()
                 else:
-                    rng, rng_action = jax.random.split(rng)
                     action = self.policy.get_action(params, obs, rng_action)
-
                     if not isinstance(action.action, np.ndarray):
                         action = np.array(action.action)[0]
 
@@ -60,7 +86,7 @@ class OffPolicyRoller:
                 next_obs, reward, done, _, _ = self.env.step(action)
                 rb.add_experience(obs, action, reward, next_obs, done)
 
-                if timesteps % self.update_every == 0:
+                if timesteps % self.update_every == 0 and rb.current_size >= self.batch_size:
                     data = rb.sample_experience(self.batch_size)
                     params, opt_state, loss = self.policy.update_parameters(params, opt_state, data)
                     params = self.policy.update_target(params)
@@ -71,6 +97,9 @@ class OffPolicyRoller:
                 timesteps += 1
                 ep_timesteps += 1
                 pbar.update(1)
+
+                if timesteps % self.eval_every == 0:
+                    self.eval(params)
 
                 if done or ep_timesteps >= self.max_timesteps_per_episode:
                     print("Episode total reward:", ep_reward)
@@ -87,8 +116,8 @@ if __name__ == "__main__":
     import gymnasium as gym
     from minigrid.wrappers import FlatObsWrapper
 
-    env = gym.make("MiniGrid-Empty-5x5-v0", render_mode="human")
-    env = FlatObsWrapper(env)
+    env = gym.make("MountainCar-v0", render_mode="human")
+    # env = FlatObsWrapper(env)
 
     policy = DQN(
         env.observation_space.shape[0],
@@ -98,5 +127,5 @@ if __name__ == "__main__":
         learning_rate=1e-3
     )
 
-    roller = OffPolicyRoller(policy, env)
+    roller = OffPolicyRoller(policy, env, batch_size=256)
     roller.run()
