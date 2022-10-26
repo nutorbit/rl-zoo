@@ -27,6 +27,10 @@ jobs:
       #----------------------------------------------
       - name: Check out repository
         uses: actions/checkout@v3
+
+      - name: Set up ubuntu
+        run: apt install swig
+
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v3
@@ -57,9 +61,7 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          apt install swig
-          poetry install --no-interaction --no-root
+        run: poetry install --no-interaction --no-root
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
