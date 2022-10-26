@@ -14,6 +14,13 @@ OptimizerState = namedtuple("OptimizerState", "state")
 
 
 class DQN:
+    """
+    An implementation of Double DQN
+    Reference:
+        https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf
+        https://arxiv.org/abs/1509.06461
+    """
+
     def __init__(self,
                  obs_dim: int,
                  action_dim: int,
