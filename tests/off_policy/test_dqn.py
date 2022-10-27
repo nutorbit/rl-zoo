@@ -26,8 +26,3 @@ def test_dqn():
 
     # check if the loss is decreasing
     assert loss1 > loss2
-
-
-def test_dqn_gym():
-    # TODO: add a test for DQN on a gym environment
-    pass
