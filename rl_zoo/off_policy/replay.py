@@ -1,6 +1,6 @@
 import pickle
 import random
-
+import numpy as np
 import jax.numpy as jnp
 
 from typing import *
@@ -18,10 +18,10 @@ class ReplayBuffer:
 
     def add_experience(
             self,
-            obs: jnp.ndarray,
+            obs: Union[jnp.ndarray, np.ndarray],
             action: int,
             reward: float,
-            next_obs: jnp.ndarray,
+            next_obs: Union[jnp.ndarray, np.ndarray],
             done: Any
     ):
 
@@ -30,7 +30,7 @@ class ReplayBuffer:
         )
 
     def sample_experience(self, size: int = 32) -> Tuple[jnp.ndarray, ...]:
-        obs, action, reward, next_obs, done = zip(*random.sample(self.buffer, k=size))
+        obs, action, reward, next_obs, done = zip(*random.sample(self.buffer, k=min(self.current_size, size)))
         return (
             jnp.stack(obs),
             jnp.array(action),

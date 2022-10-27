@@ -27,6 +27,10 @@ jobs:
       #----------------------------------------------
       - name: Check out repository
         uses: actions/checkout@v3
+
+      - name: Set up ubuntu
+        run: sudo apt-get install swig build-essential python-dev python3-dev
+
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v3
