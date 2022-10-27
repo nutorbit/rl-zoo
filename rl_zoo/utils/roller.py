@@ -2,8 +2,7 @@ import jax
 import numpy as np
 
 from tqdm import tqdm
-
-from rl_zoo.off_policy.dqn import DQN
+from typing import Any
 from rl_zoo.off_policy.replay import ReplayBuffer
 
 
@@ -19,6 +18,7 @@ class OffPolicyRoller:
                  update_every: int = 5,
                  eval_every: int = 500,
                  batch_size: int = 32,
+                 logger: Any = None,
                  ):
 
         self.policy = policy
@@ -31,6 +31,7 @@ class OffPolicyRoller:
         self.update_every = update_every
         self.eval_every = eval_every
         self.batch_size = batch_size
+        self.logger = logger
 
     def eval(self, params):
         rng = jax.random.PRNGKey(1)
@@ -54,8 +55,8 @@ class OffPolicyRoller:
             if ep_timesteps >= self.max_timesteps_per_episode:
                 break
 
-        print("Evaluation total reward:", ep_reward)
-        print("--------------")
+        if self.logger is not None:
+            self.logger.log({"Evaluation returns": ep_reward})
 
     def run(self):
         rb = ReplayBuffer(self.replay_size)
@@ -85,11 +86,11 @@ class OffPolicyRoller:
                 # step
                 next_obs, reward, done, _, _ = self.env.step(action)
                 rb.add_experience(obs, action, reward, next_obs, done)
+                obs = next_obs
 
                 if timesteps % self.update_every == 0 and rb.current_size >= self.batch_size:
                     data = rb.sample_experience(self.batch_size)
                     params, opt_state, loss = self.policy.update_parameters(params, opt_state, data)
-                    params = self.policy.update_target(params)
 
                 # update stats
                 ep_reward += reward
@@ -100,32 +101,17 @@ class OffPolicyRoller:
 
                 if timesteps % self.eval_every == 0:
                     self.eval(params)
+                    obs, _ = self.env.reset()
 
                 if done or ep_timesteps >= self.max_timesteps_per_episode:
-                    print("Episode total reward:", ep_reward)
-                    print("Episode total timesteps:", ep_timesteps)
-                    print("--------------")
+                    if self.logger is not None:
+                        self.logger.log({
+                            "Episode returns": ep_reward,
+                            "Episode total timesteps": ep_timesteps,
+                        })
 
                     obs, _ = self.env.reset()
                     ep_reward = 0
                     ep_timesteps = 0
 
-
-if __name__ == "__main__":
-    # TODO: remove this test code after done everything
-    import gymnasium as gym
-    from minigrid.wrappers import FlatObsWrapper
-
-    env = gym.make("MountainCar-v0", render_mode="human")
-    # env = FlatObsWrapper(env)
-
-    policy = DQN(
-        env.observation_space.shape[0],
-        env.action_space.n,
-        hiddens=[128, 128, 128],
-        gamma=0.99,
-        learning_rate=1e-3
-    )
-
-    roller = OffPolicyRoller(policy, env, batch_size=256)
-    roller.run()
+                    params = self.policy.update_target(params)
