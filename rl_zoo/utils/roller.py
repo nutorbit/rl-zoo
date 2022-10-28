@@ -64,7 +64,7 @@ class OffPolicyRoller:
         rng = jax.random.PRNGKey(1)
         rng, rng_init = jax.random.split(rng)
         params = self.policy.initial_parameters(rng_init)
-        opt_state = self.policy.initial_optimizer(params.q)
+        opt_state = self.policy.initial_optimizer(params)
 
         obs, _ = self.env.reset()
 
@@ -91,6 +91,9 @@ class OffPolicyRoller:
                 if timesteps % self.update_every == 0 and rb.current_size >= self.batch_size:
                     data = rb.sample_experience(self.batch_size)
                     params, opt_state, loss = self.policy.update_parameters(params, opt_state, data)
+
+                    if self.logger is not None:
+                        self.logger.log(loss._asdict())
 
                 # update stats
                 ep_reward += reward
