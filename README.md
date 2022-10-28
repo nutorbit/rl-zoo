@@ -19,3 +19,4 @@ $ poetry run pytest
 ## Algorithms
 
 - [x] [DQN](/rl_zoo/off_policy/dqn.py)
+- [] [DDPG](/rl_zoo/off_policy/ddpg.py)
