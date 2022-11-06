@@ -5,8 +5,7 @@ import jax.numpy as jnp
 from rl_zoo.utils.common import Transition
 from rl_zoo.utils.model import build_mlp, hard_update
 from collections import namedtuple
-from typing import List, Tuple, NamedTuple
-
+from typing import List, Tuple, NamedTuple, Any
 
 QParameters = namedtuple("QParameters", "q q_target")
 PolicyParameters = namedtuple("PolicyParameters", "policy")
@@ -50,6 +49,7 @@ class DDPG:
 
         self.update_parameters = jax.jit(self.update_parameters)
         self.get_action = jax.jit(self.get_action)
+        self.get_random_action = jax.jit(self.get_random_action)
 
     def initial_parameters(self, rng) -> Parameters:
         # q network
@@ -136,9 +136,16 @@ class DDPG:
         )
 
     def get_action(self, params: Parameters, obs: jnp.ndarray, rng) -> Output:
-        # TODO: add action noise
         obs = jnp.reshape(obs, (1, -1))
         return Output(
             self.policy.apply(params.policy.policy, obs),
+            None
+        )
+
+    def get_random_action(self, params: Parameters, obs: jnp.ndarray, rng) -> Output:
+        obs = jnp.reshape(obs, (1, -1))
+        action = self.policy.apply(params.policy.policy, obs)
+        return Output(
+            action + jax.random.normal(rng, action.shape),
             None
         )

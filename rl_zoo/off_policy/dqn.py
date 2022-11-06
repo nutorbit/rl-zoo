@@ -5,8 +5,7 @@ import jax.numpy as jnp
 from rl_zoo.utils.common import gather_nd, Transition
 from rl_zoo.utils.model import build_mlp, hard_update
 from collections import namedtuple
-from typing import List, Tuple
-
+from typing import List, Tuple, Any
 
 Parameters = namedtuple("Parameters", "q q_target")
 Output = namedtuple("Output", "action q")
@@ -37,6 +36,7 @@ class DQN:
 
         self.update_parameters = jax.jit(self.update_parameters)
         self.get_action = jax.jit(self.get_action)
+        self.get_random_action = jax.jit(self.get_random_action)
 
     def initial_parameters(self, rng) -> Parameters:
         sample_input = jnp.zeros((1, self.obs_dim))
@@ -87,3 +87,9 @@ class DQN:
         q = self.q.apply(params.q, obs)
         best_action = jnp.argmax(q, axis=1)
         return Output(best_action, q)
+
+    def get_random_action(self, params: Parameters, obs: jnp.ndarray, rng) -> Output:
+        obs = jnp.reshape(obs, (1, -1))
+        q = self.q.apply(params.q, obs)
+        action = jax.random.randint(rng, shape=(1,), minval=0, maxval=self.action_dim)
+        return Output(action, q)
