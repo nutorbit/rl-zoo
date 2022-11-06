@@ -5,7 +5,7 @@ import jax.numpy as jnp
 from rl_zoo.utils.common import gather_nd, Transition
 from rl_zoo.utils.model import build_mlp, hard_update
 from collections import namedtuple
-from typing import List, Tuple, Any
+from typing import List, Tuple
 
 Parameters = namedtuple("Parameters", "q q_target")
 Output = namedtuple("Output", "action q")

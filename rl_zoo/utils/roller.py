@@ -77,9 +77,9 @@ class OffPolicyRoller:
                 # select action
                 rng, rng_action = jax.random.split(rng)
                 if timesteps <= self.warm_start or jax.random.uniform(rng_action) < self.epsilon:
-                    action = self.policy.get_random_action(params, obs, rng_action)
+                    action = self.policy.get_random_action(params, obs, rng)
                 else:
-                    action = self.policy.get_action(params, obs, rng_action)
+                    action = self.policy.get_action(params, obs, rng)
                 if not isinstance(action.action, np.ndarray):
                     action = np.array(action.action)[0]
 

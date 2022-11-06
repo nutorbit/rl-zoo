@@ -5,7 +5,7 @@ import jax.numpy as jnp
 from rl_zoo.utils.common import Transition
 from rl_zoo.utils.model import build_mlp, hard_update
 from collections import namedtuple
-from typing import List, Tuple, NamedTuple, Any
+from typing import List, Tuple, NamedTuple
 
 QParameters = namedtuple("QParameters", "q q_target")
 PolicyParameters = namedtuple("PolicyParameters", "policy")
