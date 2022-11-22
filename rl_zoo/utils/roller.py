@@ -56,7 +56,10 @@ class OffPolicyRoller:
                 break
 
         if self.logger is not None:
-            self.logger.log({"Evaluation returns": ep_reward})
+            self.logger.log({
+                "Evaluation returns": ep_reward,
+                "Evaluation total timesteps": ep_timesteps,
+            })
 
     def run(self):
         rb = ReplayBuffer(self.replay_size)
