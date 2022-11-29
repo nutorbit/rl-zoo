@@ -29,7 +29,6 @@ def main():
         logger=wandb
     )
 
-    # TODO: test this
     roller.run()
 
 

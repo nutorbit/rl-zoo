@@ -8,6 +8,10 @@ from collections import deque
 
 
 class ReplayBuffer:
+    
+    # TODO: control the randomness using seed
+    # maybe use jax.random instead of random
+    
     def __init__(self, size: int = 10_000):
         self.max_size = size
         self.buffer = None
