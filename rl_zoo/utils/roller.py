@@ -56,7 +56,10 @@ class OffPolicyRoller:
                 break
 
         if self.logger is not None:
-            self.logger.log({"Evaluation returns": ep_reward})
+            self.logger.log({
+                "Evaluation returns": ep_reward,
+                "Evaluation total timesteps": ep_timesteps,
+            })
 
     def run(self):
         rb = ReplayBuffer(self.replay_size)
@@ -64,7 +67,7 @@ class OffPolicyRoller:
         rng = jax.random.PRNGKey(1)
         rng, rng_init = jax.random.split(rng)
         params = self.policy.initial_parameters(rng_init)
-        opt_state = self.policy.initial_optimizer(params.q)
+        opt_state = self.policy.initial_optimizer(params)
 
         obs, _ = self.env.reset()
 
@@ -77,11 +80,11 @@ class OffPolicyRoller:
                 # select action
                 rng, rng_action = jax.random.split(rng)
                 if timesteps <= self.warm_start or jax.random.uniform(rng_action) < self.epsilon:
-                    action = self.env.action_space.sample()
+                    action = self.policy.get_random_action(params, obs, rng)
                 else:
-                    action = self.policy.get_action(params, obs, rng_action)
-                    if not isinstance(action.action, np.ndarray):
-                        action = np.array(action.action)[0]
+                    action = self.policy.get_action(params, obs, rng)
+                if not isinstance(action.action, np.ndarray):
+                    action = np.array(action.action)[0]
 
                 # step
                 next_obs, reward, done, _, _ = self.env.step(action)
@@ -91,6 +94,9 @@ class OffPolicyRoller:
                 if timesteps % self.update_every == 0 and rb.current_size >= self.batch_size:
                     data = rb.sample_experience(self.batch_size)
                     params, opt_state, loss = self.policy.update_parameters(params, opt_state, data)
+
+                    if self.logger is not None:
+                        self.logger.log(loss._asdict())
 
                 # update stats
                 ep_reward += reward

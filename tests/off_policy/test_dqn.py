@@ -9,7 +9,7 @@ def test_dqn():
     # initialize the model parameters
     model = DQN(11, 4)
     params = model.initial_parameters(jax.random.PRNGKey(1))
-    opt_state = model.initial_optimizer(params.q)
+    opt_state = model.initial_optimizer(params)
 
     # generate a random transition
     obs = jax.random.uniform(jax.random.PRNGKey(1), (10, 11))

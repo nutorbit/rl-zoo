@@ -7,10 +7,10 @@ from rl_zoo.utils.model import build_mlp, hard_update
 from collections import namedtuple
 from typing import List, Tuple
 
-
 Parameters = namedtuple("Parameters", "q q_target")
 Output = namedtuple("Output", "action q")
 OptimizerState = namedtuple("OptimizerState", "state")
+Loss = namedtuple("Loss", "loss")
 
 
 class DQN:
@@ -36,6 +36,7 @@ class DQN:
 
         self.update_parameters = jax.jit(self.update_parameters)
         self.get_action = jax.jit(self.get_action)
+        self.get_random_action = jax.jit(self.get_random_action)
 
     def initial_parameters(self, rng) -> Parameters:
         sample_input = jnp.zeros((1, self.obs_dim))
@@ -47,8 +48,8 @@ class DQN:
 
         return Parameters(q_params, q_target_params)
 
-    def initial_optimizer(self, params) -> OptimizerState:
-        opt_state = self.opt.init(params)
+    def initial_optimizer(self, params: Parameters) -> OptimizerState:
+        opt_state = self.opt.init(params.q)
         return OptimizerState(opt_state)
 
     def td_error(self, q_params, q_target_params, data: Transition):
@@ -64,7 +65,7 @@ class DQN:
     def update_parameters(self,
                           params: Parameters,
                           opt_state: OptimizerState,
-                          data: Transition) -> Tuple[Parameters, OptimizerState, float]:
+                          data: Transition) -> Tuple[Parameters, OptimizerState, Loss]:
 
         grad_fn = jax.value_and_grad(self.td_error)
         loss, grads = grad_fn(params.q, params.q_target, data)
@@ -74,7 +75,7 @@ class DQN:
         return (
             Parameters(q_params, params.q_target),
             OptimizerState(opt_state),
-            loss
+            Loss(loss)
         )
 
     def update_target(self, params: Parameters) -> Parameters:
@@ -86,3 +87,9 @@ class DQN:
         q = self.q.apply(params.q, obs)
         best_action = jnp.argmax(q, axis=1)
         return Output(best_action, q)
+
+    def get_random_action(self, params: Parameters, obs: jnp.ndarray, rng) -> Output:
+        obs = jnp.reshape(obs, (1, -1))
+        q = self.q.apply(params.q, obs)
+        action = jax.random.randint(rng, shape=(1,), minval=0, maxval=self.action_dim)
+        return Output(action, q)
